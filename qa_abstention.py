@@ -82,7 +82,7 @@ class Embedder:
                 emb = h[torch.arange(h.size(0)), m.sum(1) - 1]
             else:                                                        # mean-pool (best for encoders)
                 mf = m.unsqueeze(-1).float(); emb = (h * mf).sum(1) / mf.sum(1).clamp(min=1)
-            out.append(F.normalize(emb, dim=-1).cpu())
+            out.append(F.normalize(emb.float(), dim=-1).cpu())          # fp32 (backbone may be bf16 on GPU)
         return torch.cat(out)
 
 def encode_set(emb, ex):
