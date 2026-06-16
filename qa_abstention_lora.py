@@ -155,8 +155,13 @@ def main():
         t = results[k]
         print(f"  {k:<22}" + "".join(f"{t[r][0]:.2f}/{t[r][1]:.2f}{'':>5}" for r in ("0.80", "0.90", "0.95")))
     fc, lc = results["frozen_copositive"]["0.90"], results["lora_copositive"]["0.90"]
-    print(f"\n  copositive EASY false-answer @ recall .90:  frozen {fc[0]:.2f}  ->  LoRA {lc[0]:.2f}"
-          f"   ({'WIDER gap (LoRA helps)' if lc[0] < fc[0] - 0.03 else 'no clear improvement'})")
+    print(f"\n  copositive @ recall .90, frozen -> LoRA:   easy {fc[0]:.2f}->{lc[0]:.2f}   hard {fc[1]:.2f}->{lc[1]:.2f}")
+    if lc[0] < fc[0] - 0.02 and lc[1] < fc[1] - 0.02:
+        print("    -> LoRA helps on BOTH (genuine widening)")
+    elif lc[0] < fc[0] - 0.02 and lc[1] > fc[1] + 0.02:
+        print("    -> LoRA TRADED easy<-for->hard (not a clear win; report honestly)")
+    else:
+        print("    -> no clear LoRA effect")
     print(f"  artifacts saved to ./{a.out}/  (frozen heads + LoRA adapters + heads + metadata)")
 
 if __name__ == "__main__":
