@@ -147,6 +147,7 @@ def main():
     ap.add_argument("--seed", type=int, default=0); ap.add_argument("--steps", type=int, default=400)
     ap.add_argument("--pooling", choices=["mean", "last"], default="mean",
                     help="mean for encoder backbones (MiniLM); last for decoder LLMs (Qwen, etc.)")
+    ap.add_argument("--save_dir", default="", help="if set, save each trained read head here for download")
     a = ap.parse_args(); rng = np.random.default_rng(a.seed)
     print(f"model={a.model} device={a.device} pooling={a.pooling}  (frozen backbone + trained read)")
     emb = Embedder(a.model, a.device, a.pooling)
@@ -160,6 +161,9 @@ def main():
     for read in ("softmax", "copositive"):
         torch.manual_seed(a.seed)
         head = train_head(Head(emb.d, read).to("cpu"), qTr, cTr, mTr, yTr, steps=a.steps)
+        if a.save_dir:                                                   # save the frozen read head for download
+            os.makedirs(a.save_dir, exist_ok=True)
+            torch.save(head.state_dict(), f"{a.save_dir}/frozen_{read}_s{a.seed}_head.pt")
         raw[read] = dict(ansd=sigset(head, qEv[ans], cEv[ans], mEv[ans]),
                          hard=sigset(head, qEv[un], cEv[un], mEv[un]),
                          easy=sigset(head, qEv, easyC, easyM))           # all easy = unanswerable
